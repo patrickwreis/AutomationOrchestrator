@@ -1,3 +1,4 @@
+import contextlib
 import os
 import sys
 import django
@@ -46,15 +47,10 @@ def database_backup():
         print(f"{datetime.now()}: ERROR! Failed to perform a backup of the database...")
 
     finally:
-        try:
+        with contextlib.suppress(Exception):
             db.close()
-        except Exception:
-            pass
-
-        try:
+        with contextlib.suppress(Exception):
             db_backup.close()
-        except Exception:
-            pass
 
 
 def main():
@@ -84,7 +80,8 @@ def main():
     else:
         url = gethostbyname_ex(gethostname())[-1][-1]
         url = f"http://{url}:8000/"
-        cmd = [python, MANAGE_SERVER_PATH, 'runserver', '0.0.0.0:8000', '--noreload']
+        # cmd = [python, MANAGE_SERVER_PATH, 'runserver', '0.0.0.0:8000', '--noreload']
+        cmd = [python, MANAGE_SERVER_PATH, 'runserver', '0.0.0.0:8000']
 
     start_time_loop = datetime.now()
 

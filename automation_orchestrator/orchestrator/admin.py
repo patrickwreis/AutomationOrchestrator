@@ -58,7 +58,7 @@ def run_selected_api_triggers(modeladmin, request, queryset):
 def cancel_selected_botflow_executions(modeladmin, request, queryset):
     time_zone = str(get_localzone())
 
-    time_now = datetime.datetime.now(pytz.timezone(time_zone)).strftime(f"%Y-%m-%dT%H:%M:%S+0{str(int(datetime.datetime.now(pytz.timezone(time_zone)).utcoffset().seconds / 60 / 60))}00")
+    time_now = datetime.datetime.now(pytz.timezone(time_zone)).strftime("%Y-%m-%dT%H:%M:%S%z")[:-2] + ':' + datetime.datetime.now(pytz.timezone(time_zone)).strftime("%z")[-2:]
 
     for item in queryset:
         if item.time_start == None or item.time_end == None or item.status == "Running":

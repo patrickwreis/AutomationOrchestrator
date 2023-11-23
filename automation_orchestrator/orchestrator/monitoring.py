@@ -1,3 +1,4 @@
+import logging
 import re
 import os
 import glob
@@ -21,7 +22,6 @@ from django.db.models import Q
 from django.db.utils import OperationalError
 from dateutil.relativedelta import relativedelta
 from pythoncom import CoInitialize, CoUninitialize
-
 
 trigger_sleep = 5
 email_imap_sleep = 15
@@ -309,7 +309,7 @@ def botflow_execution_monitor_running_timeout():
         runtime_minutes = ((pytz.utc.localize(datetime.datetime.utcnow()) - item.time_start).total_seconds()) / 60
 
         if runtime_minutes > (item.timeout_minutes + 5):
-            item.time_end = datetime.datetime.now(pytz.timezone(time_zone)).strftime(f"%Y-%m-%dT%H:%M:%S+0{str(int(datetime.datetime.now(pytz.timezone(time_zone)).utcoffset().seconds / 60 / 60))}00")
+            item.time_end = datetime.datetime.now(pytz.timezone(time_zone)).strftime("%Y-%m-%dT%H:%M:%S%z")[:-2] + ':' + datetime.datetime.now(pytz.timezone(time_zone)).strftime("%z")[-2:]
             item.status = "Error - Unknown Interruption"
             item.save()
 
@@ -849,7 +849,7 @@ def botflow_execution_monitor_evaluate():
                         if item.nintex_rpa_available_foxtrot_licenses <= len([file for file in os.listdir(nintex_rpa_license_path) if file.startswith("FTE") and file.endswith(".net")]):
                             continue
 
-        item.time_start = datetime.datetime.now(pytz.timezone(time_zone)).strftime(f"%Y-%m-%dT%H:%M:%S+0{str(int(datetime.datetime.now(pytz.timezone(time_zone)).utcoffset().seconds / 60 / 60))}00")
+        item.time_start = datetime.datetime.now(pytz.timezone(time_zone)).strftime("%Y-%m-%dT%H:%M:%S%z")[:-2] + ':' + datetime.datetime.now(pytz.timezone(time_zone)).strftime("%z")[-2:]
         item.status = "Running"
         item.save()
 
@@ -881,11 +881,38 @@ def botflow_execution_monitor_evaluate():
                         )
 
                     elif (app == "python.exe" or app == "pythonw.exe" or app == "cscript.exe" or app == "wscript.exe"):
-                        subprocess.run(
-                            [item.app, item.botflow, str(item.pk), item.trigger],
-                            timeout=(item.timeout_minutes * 60),
-                            cwd=os.path.dirname(item.botflow) if item.is_file else os.path.dirname(item.app)
-                        )
+                        try:
+                            subprocess.run(
+                                [item.app, item.botflow, str(item.pk), item.trigger],
+                                timeout=(item.timeout_minutes * 60),
+                                cwd=os.path.dirname(item.botflow) if item.is_file else os.path.dirname(item.app),
+                                check=True,  # Lançar um erro (CalledProcessError) se o comando falhar (retorno diferente de 0)
+                                capture_output=True, # Capturar a saída do subprocesso (stdout e stderr)
+                                text=True # Capturar a saída como texto em vez de bytes
+                            )
+
+                            # Registrar informações sobre a execução bem-sucedida no arquivo de log
+                            logging.info(f"Execução com sucesso")
+
+                        except subprocess.CalledProcessError as e:
+                            # Registrar informações sobre a falha na execução no arquivo de log
+                            logging.error(f"Erro na execução")
+                            logging.error(f"Comando: {e.cmd}")
+                            logging.error(f"Código de retorno: {e.returncode}")
+                            logging.error(f"Saída (stdout): {e.stdout}")
+                            logging.error(f"Saída de erro (stderr): {e.stderr}")
+
+                        except subprocess.TimeoutExpired as e:
+                            # Registrar informações sobre o timeout no arquivo de log
+                            logging.error(f"Erro: O tempo limite foi excedido")
+                            logging.error(f"Comando: {e.cmd}")
+                            logging.error(f"Tempo limite: {e.timeout}s")
+                            logging.error(f"Saída (stdout): {e.stdout}")
+                            logging.error(f"Saída de erro (stderr): {e.stderr}")
+
+                        except Exception as e:
+                            # Registrar informações sobre quaisquer outros erros no arquivo de log
+                            logging.error(f"Erro: {e}")
 
                     else:
                         subprocess.run(
@@ -930,7 +957,7 @@ def botflow_execution_monitor_evaluate():
             else:
                 status = "Error - Unknown Issue"
 
-        item.time_end = datetime.datetime.now(pytz.timezone(time_zone)).strftime(f"%Y-%m-%dT%H:%M:%S+0{str(int(datetime.datetime.now(pytz.timezone(time_zone)).utcoffset().seconds / 60 / 60))}00")
+        item.time_end = datetime.datetime.now(pytz.timezone(time_zone)).strftime("%Y-%m-%dT%H:%M:%S%z")[:-2] + ':' + datetime.datetime.now(pytz.timezone(time_zone)).strftime("%z")[-2:]
         item.status = status
         item.save()
 

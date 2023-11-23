@@ -222,7 +222,7 @@ def log_python_function(python_function=None, request_user=None, request_ip=None
             request_ip=request_ip,
             code=code,
             input=input,
-            time_start = datetime.datetime.now(pytz.timezone(time_zone)).strftime(f"%Y-%m-%dT%H:%M:%S+0{str(int(datetime.datetime.now(pytz.timezone(time_zone)).utcoffset().seconds / 60 / 60))}00")
+            time_start = datetime.datetime.now(pytz.timezone(time_zone)).strftime("%Y-%m-%dT%H:%M:%S%z")[:-2] + ':' + datetime.datetime.now(pytz.timezone(time_zone)).strftime("%z")[-2:]
         )
         execution.save()
 
@@ -230,7 +230,7 @@ def log_python_function(python_function=None, request_user=None, request_ip=None
 
     else:
         execution.output = output
-        execution.time_end = datetime.datetime.now(pytz.timezone(time_zone)).strftime(f"%Y-%m-%dT%H:%M:%S+0{str(int(datetime.datetime.now(pytz.timezone(time_zone)).utcoffset().seconds / 60 / 60))}00")
+        execution.time_end = datetime.datetime.now(pytz.timezone(time_zone)).strftime("%Y-%m-%dT%H:%M:%S%z")[:-2] + ':' + datetime.datetime.now(pytz.timezone(time_zone)).strftime("%z")[-2:]
         execution.save()
 
         return execution
