@@ -80,8 +80,7 @@ def main():
     else:
         url = gethostbyname_ex(gethostname())[-1][-1]
         url = f"http://{url}:8000/"
-        # cmd = [python, MANAGE_SERVER_PATH, 'runserver', '0.0.0.0:8000', '--noreload']
-        cmd = [python, MANAGE_SERVER_PATH, 'runserver', '0.0.0.0:8000']
+        cmd = [python, MANAGE_SERVER_PATH, 'runserver', '0.0.0.0:8000', '--noreload']
 
     start_time_loop = datetime.now()
 
